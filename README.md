@@ -57,13 +57,13 @@ https://www.nesdev.org/wiki/PAL_video
 These timings and extra NES specific features were incorporated into the NES version by Persune.  
 
 Special thanks to the NESDev Discord Server and Forums
-as well as the the following members (in no particular order):
- *lidnariq*
- *Persune*
- *Eugene.S*
- *L. Spiro*
- *org*
- *feos*
+as well as the the following members (in no particular order):  
+ *lidnariq*  
+ *Persune*  
+ *Eugene.S*  
+ *L. Spiro*  
+ *org*  
+ *feos*  
 
 ## Compiling
 
