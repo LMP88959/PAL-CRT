@@ -8,6 +8,7 @@ PAL video signal encoding / decoding emulation by EMMIR 2018-2023
 [![alt text](/kc_pal.png?raw=true)](https://www.youtube.com/watch?v=7sBli684l5k)
 ### Test images
 ![alt text](/ti_pal.png?raw=true)
+### SMPTE Bars (for a better view of the chroma patterns)
 ![alt text](/cbars_pal.png?raw=true)
 
 ### Description
