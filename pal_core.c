@@ -96,7 +96,7 @@ pal_bpp4fmt(int format)
  */
 static struct EQF {
     int h[7];
-} eqY, eqI, eqQ;
+} eqY, eqU, eqV;
 
 /* params unused to keep the function the same */
 static void
