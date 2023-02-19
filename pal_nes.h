@@ -29,6 +29,7 @@ extern "C" {
  * L. Spiro
  * org
  * feos
+ * HardWareMan
  */
 
 #define PAL_CC_LINE 28417
@@ -119,6 +120,9 @@ struct PAL_SETTINGS {
     int hue;              /* 0-359 */
     /* make sure your PAL_SETTINGS struct is zeroed out before you do anything */
     int field_initialized; /* internal state */
+    
+    /* internal data */
+    int altline[6]; /* stores alternating line pattern */
 };
 
 #ifdef __cplusplus
