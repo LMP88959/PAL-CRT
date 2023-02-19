@@ -68,6 +68,10 @@ struct PAL_CRT {
     int scanlines; /* leave gaps between lines if necessary */
     int blend; /* blend new field onto previous image */
     int chroma_correction; /* aka Hanover bar correction */ 
+    int chroma_lag; /* misalignment of Y and UV due to decoding delay */
+    /* NOTE!!! chroma_lag is only defined between [-8, 8]
+     * anything else provokes undefined behavior and might crash the program
+     */
     unsigned v_fac; /* factor to stretch img vertically onto the output img */
 
     /* internal data */
