@@ -414,7 +414,13 @@ updatecb(void)
         crt.blend ^= 1;
         printf("crt.blend: %d\n", crt.blend);
     }
-    
+    if (pkb_key_pressed('k')) {
+        crt.chroma_lag++;
+        if (crt.chroma_lag > 8) {
+            crt.chroma_lag = -8;
+        }
+        printf("chroma_lag: %d\n", crt.chroma_lag);
+    }
     if (pkb_key_pressed('f')) {
         field++;
         printf("field: %d\n", field);
