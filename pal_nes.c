@@ -20,6 +20,7 @@
  * NOTE: in this PAL version, the red and green emphasis bits swap meaning
  * when compared to the NTSC version
  */
+static int alter = 0; /* flag for alternate line */
 static int
 square_sample(int p, int phase)
 {
@@ -40,7 +41,7 @@ square_sample(int p, int phase)
         0600, 0400,
         0500, 0100
     };
-    int hue;
+    int hue, ohue;
     int e, l, v;
 
     hue = (p & 0x0f);
@@ -49,16 +50,20 @@ square_sample(int p, int phase)
     if (hue >= 0x0e) {
         return 0;
     }
-
+    ohue = hue;
+    if (alter) {
+        hue = 0x0d - hue;
+    }
     v = (((hue + phase) % 12) < 6);
-    
+
     /* red 0200, green 0100, blue 0400 */
     e = (((p & 0700) & active[(phase >> 1) % 6]) > 0);
-    switch (hue) {
+    switch (ohue) {
         case 0x00: l = 1; break;
         case 0x0d: l = 0; break;
         default:   l = v; break;
     }
+
     return IRE[(l << 3) + (e << 2) + ((p >> 4) & 3)];
 }
 
@@ -142,10 +147,16 @@ pal_modulate(struct PAL_CRT *v, struct PAL_SETTINGS *s)
  
         n = (y + yo);
         line = &v->analog[n * PAL_HRES];
-        for (t = BW_BEG; t < CB_BEG; t++) {
-            line[t] = SYNC_LEVEL;
+        if (bsign[n & 3] == -1) {
+            for (t = BW_BEG; t < CB_BEG; t++) {
+                line[t] = SYNC_LEVEL;
+            }
+        } else {
+            for (t = BW_BEG; t < CB_BEG; t++) {
+                line[t] = BLANK_LEVEL;
+            }
         }
-        
+
         for (t = CB_BEG; t < CB_BEG + (CB_CYCLES * PAL_CB_FREQ); t++) {
             cb = ccburst[n % 6][t & 3];
             line[t] = (BLANK_LEVEL + (cb * BURST_LEVEL)) >> 5;
@@ -153,8 +164,9 @@ pal_modulate(struct PAL_CRT *v, struct PAL_SETTINGS *s)
         }
         sy *= s->w;
 
-        phase = (n % 12) * 2;
-        phase += bsign[n % 6] == 1 ? 6 : 0;
+        phase = (n % 6) * 2;
+        alter = bsign[n % 6] == -1;
+        phase += alter ? 0 : 6;
         for (x = 0; x < destw; x++) {
             int ire, p;
             
