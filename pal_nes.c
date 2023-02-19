@@ -142,9 +142,9 @@ pal_modulate(struct PAL_CRT *v, struct PAL_SETTINGS *s)
         }
     }
 
-    xo = AV_BEG;
-    yo = PAL_TOP;
-         
+    xo = AV_BEG  + s->xoffset;
+    yo = PAL_TOP + s->yoffset;
+    
     /* align signal */
     xo = (xo & ~3);
     /* no border on PAL according to https://www.nesdev.org/wiki/PAL_video */
