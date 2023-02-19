@@ -13,6 +13,7 @@ t - (in non-NES mode) toggle raw display mode
 m - toggle fading phosphors
 g - toggle scanlines
 b - toggle field blending
+k - change between amounts of chroma lag, (-8 -> 8)
 
 SPACE - (in non-NES mode) toggle color
 
