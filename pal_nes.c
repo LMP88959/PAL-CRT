@@ -10,188 +10,122 @@
  */
 /*****************************************************************************/
 
-#include "pal_core.h"
+#ifndef _PAL_NES_H_
+#define _PAL_NES_H_
 
-#if (PAL_SYSTEM == PAL_SYSTEM_NES)
-#include <stdlib.h>
-#include <string.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/* generate the square wave for a given 9-bit pixel and phase
- * NOTE: in this PAL version, the red and green emphasis bits swap meaning
- * when compared to the NTSC version
+/* pal_nes.h
+ *
+ * An interface to convert NES PPU output to an analog PAL signal.
+
+ * Special thanks to the NESDev Discord Server and Forums
+ * as well as the the following members (in no particular order):
+ * lidnariq
+ * Persune
+ * Eugene.S
+ * L. Spiro
+ * org
+ * feos
  */
-static int alter = 0; /* flag for alternate line */
-static int
-square_sample(int p, int phase)
-{
-    /* amplified IRE = ((mV / 7.143) - 312 / 7.143) * 1024 */
-    /* https://www.nesdev.org/wiki/NTSC_video#Brightness_Levels */
-    static int IRE[16] = {
-     /* 0d     1d     2d      3d */
-       -12042, 0,     34406,  81427,
-     /* 0d     1d     2d      3d emphasized */
-       -17203,-8028,  19497,  57342,
-     /* 00     10     20      30 */
-        43581, 75693, 112965, 112965,
-     /* 00     10     20      30 emphasized */
-        26951, 52181, 83721,  83721
-    };
-    static int active[6] = {
-        0300, 0200,
-        0600, 0400,
-        0500, 0100
-    };
-    int hue, ohue;
-    int e, l, v;
 
-    hue = (p & 0x0f);
+#define PAL_CC_LINE 28417
 
-    /* last two columns are black */
-    if (hue >= 0x0e) {
-        return 0;
-    }
-    ohue = hue;
-    if (alter) {
-        hue = 0x0d - hue;
-    }
-    v = (((hue + phase) % 12) < 6);
+/* NOTE, in general, increasing PAL_CB_FREQ reduces blur and bleed */
+#define PAL_CB_FREQ     4 /* carrier frequency relative to sample rate */
 
-    /* red 0200, green 0100, blue 0400 */
-    e = (((p & 0700) & active[(phase >> 1) % 6]) > 0);
-    switch (ohue) {
-        case 0x00: l = 1; break;
-        case 0x0d: l = 0; break;
-        default:   l = v; break;
-    }
+/* https://www.nesdev.org/wiki/NTSC_video#Scanline_Timing */
+#define PAL_HRES        (PAL_CC_LINE * PAL_CB_FREQ / 100) /* horizontal res */
+#define PAL_VRES        312                       /* vertical resolution */
+#define PAL_INPUT_SIZE  (PAL_HRES * PAL_VRES)
 
-    return IRE[(l << 3) + (e << 2) + ((p >> 4) & 3)];
-}
+#define PAL_TOP         42     /* first line with active video */
+#define PAL_BOT         282    /* final line with active video */
 
-/* this function is an optimization
- * basically factoring out the field setup since as long as PAL_CRT->analog
- * does not get cleared, all of this should remain the same every update
+#define PAL_LINES       (PAL_BOT - PAL_TOP) /* number of active video lines */
+
+/* NES composite signal is measured in terms of PPU pixels, or cycles
+ * https://www.nesdev.org/wiki/NTSC_video#Scanline_Timing
+ *
+ *                         FULL HORIZONTAL LINE SIGNAL
+ *                                 (341 PPU px)
+ * |---------------------------------------------------------------------------|
+ *   HBLANK (58 PPU px)               ACTIVE VIDEO (283 PPU px)
+ * |-------------------||------------------------------------------------------|
+ *
+ *
+ *   WITHIN HBLANK PERIOD:
+ *
+ *   FP (9 PPU px)  SYNC (25 PPU px) BW (4 PPU px) CB (15 PPU px) BP (5 PPU px)
+ * |--------------||---------------||------------||-------------||-------------|
+ *      BLANK            SYNC           BLANK          BLANK          BLANK
+ *
+ *
+ *   WITHIN ACTIVE VIDEO PERIOD:
+ *
+ *   LB (15 PPU px)                 AV (256 PPU px)               RB (11 PPU px)
+ * |--------------||--------------------------------------------||-------------|
+ *      BORDER                           VIDEO                        BORDER
+ *
  */
-static void
-setup_field(struct PAL_CRT *v, struct PAL_SETTINGS *s)
-{
-    int n, y;
+#define LINE_BEG         0
+#define FP_PPUpx         9         /* front porch */
+#define SYNC_PPUpx       25        /* sync tip */
+#define BW_PPUpx         4         /* breezeway */
+#define CB_PPUpx         15        /* color burst */
+#define BP_PPUpx         5         /* back porch */
+#define PS_PPUpx         1         /* pulse */
+#define LB_PPUpx         15        /* left border */
+#define AV_PPUpx         256       /* active video */
+#define RB_PPUpx         11        /* right border */
+#define HB_PPUpx         (FP_PPUpx + SYNC_PPUpx + BW_PPUpx + CB_PPUpx + BP_PPUpx) /* h blank */
+/* line duration should be ~63500 ns */
+#define LINE_PPUpx       (FP_PPUpx + SYNC_PPUpx + BW_PPUpx + CB_PPUpx + BP_PPUpx + PS_PPUpx + LB_PPUpx + AV_PPUpx + RB_PPUpx)
+
+/* convert pixel offset to its corresponding point on the sampled line */
+#define PPUpx2pos(PPUpx) ((PPUpx) * PAL_HRES / LINE_PPUpx)
+/* starting points for all the different pulses */
+#define FP_BEG           PPUpx2pos(0)                                           /* front porch point */
+#define SYNC_BEG         PPUpx2pos(FP_PPUpx)                                    /* sync tip point */
+#define BW_BEG           PPUpx2pos(FP_PPUpx + SYNC_PPUpx)                       /* breezeway point */
+#define CB_BEG           PPUpx2pos(FP_PPUpx + SYNC_PPUpx + BW_PPUpx)            /* color burst point */
+#define BP_BEG           PPUpx2pos(FP_PPUpx + SYNC_PPUpx + BW_PPUpx + CB_PPUpx) /* back porch point */
+#define LAV_BEG          PPUpx2pos(HB_PPUpx)                                    /* full active video point */
+#define AV_BEG           PPUpx2pos(HB_PPUpx + PS_PPUpx + LB_PPUpx)              /* PPU active video point */
+#define AV_LEN           PPUpx2pos(AV_PPUpx)                                    /* active video length */
+
+/* NES does not have the 25 Hz offset applied to each line */
+#define OFFSET_25Hz(y)  (0)
+
+/* somewhere between 7 and 12 cycles */
+#define CB_CYCLES   10
+
+/* line frequency */
+#define L_FREQ           1773448
+
+/* IRE units (100 = 1.0V, -40 = 0.0V) */
+#define WHITE_LEVEL      110
+#define BURST_LEVEL      30
+#define BLACK_LEVEL      0
+#define BLANK_LEVEL      0
+#define SYNC_LEVEL      -37
+
+struct PAL_SETTINGS {
+    const unsigned short *data; /* 6 or 9-bit NES 'pixels' */
+    int w, h;       /* width and height of image */
+    /* NOTE: NES mode is always progressive */
+    int hue;              /* 0-359 */
+    /* make sure your PAL_SETTINGS struct is zeroed out before you do anything */
+    int field_initialized; /* internal state */
     
-    for (y = 0; y < 6; y++) {
-        s->altline[y] = ((y & 1) ? -1 : 1);
-    }
+    /* internal data */
+    int altline[6]; /* stores alternating line pattern */
+};
 
-    for (n = 0; n < PAL_VRES; n++) {
-        int t; /* time */
-        signed char *line = &v->analog[n * PAL_HRES];
- 
-        t = LINE_BEG;
-
-        if (n <= 3 || (n >= 7 && n <= 9)) {
-            /* equalizing pulses - small blips of sync, mostly blank */
-            while (t < (4   * PAL_HRES / 100)) line[t++] = SYNC_LEVEL;
-            while (t < (50  * PAL_HRES / 100)) line[t++] = BLANK_LEVEL;
-            while (t < (54  * PAL_HRES / 100)) line[t++] = SYNC_LEVEL;
-            while (t < (100 * PAL_HRES / 100)) line[t++] = BLANK_LEVEL;
-        } else if (n >= 4 && n <= 6) {
-            int offs[4] = { 46, 50, 96, 100 };
-            /* vertical sync pulse - small blips of blank, mostly sync */
-            while (t < (offs[0] * PAL_HRES / 100)) line[t++] = SYNC_LEVEL;
-            while (t < (offs[1] * PAL_HRES / 100)) line[t++] = BLANK_LEVEL;
-            while (t < (offs[2] * PAL_HRES / 100)) line[t++] = SYNC_LEVEL;
-            while (t < (offs[3] * PAL_HRES / 100)) line[t++] = BLANK_LEVEL;
-        } else {
-            /* prerender/postrender/video scanlines */
-            while (t < SYNC_BEG) line[t++] = BLANK_LEVEL; /* FP */
-            while (t < BW_BEG) line[t++] = SYNC_LEVEL; /* SYNC */
-            while (t < PAL_HRES) line[t++] = BLANK_LEVEL;
-            if (s->altline[n & 3] == -1) {
-                for (t = BW_BEG; t < CB_BEG; t++) {
-                    line[t] = SYNC_LEVEL;
-                }
-            } else {
-                for (t = BW_BEG; t < CB_BEG; t++) {
-                    line[t] = BLANK_LEVEL;
-                }
-            }
-        }
-    }
+#ifdef __cplusplus
 }
- 
-extern void
-pal_modulate(struct PAL_CRT *v, struct PAL_SETTINGS *s)
-{
-    int x, y, xo, yo;
-    int destw = AV_LEN;
-    int desth = PAL_LINES;
-    int n, phase;
-    int iccf[6][4];
-    int ccburst[6][4]; /* color phase for burst */
-    int sn, cs;
-        
-    if (!s->field_initialized) {
-        setup_field(v, s);
-        s->field_initialized = 1;
-    }
-    for (y = 0; y < 6; y++) {
-        int vert = y * (360 / 6);
-        for (x = 0; x < 4; x++) {
-            n = vert + s->hue + x * 90 + 135;
-            /* swinging burst */
-            pal_sincos14(&sn, &cs, (n + s->altline[y] * 60) * 8192 / 180);
-            ccburst[y][x] = sn >> 10;
-        }
-    }
-
-    xo = AV_BEG;
-    yo = PAL_TOP;
-         
-    /* align signal */
-    xo = (xo & ~3);
-    /* no border on PAL according to https://www.nesdev.org/wiki/PAL_video */
-    for (y = 0; y < desth; y++) {
-        signed char *line;  
-        int t, cb, nm6;
-        int sy = (y * s->h) / desth;
-
-        if (sy >= s->h) sy = s->h;
-        if (sy < 0) sy = 0;
- 
-        n = (y + yo);
-        nm6 = n % 6;
-        line = &v->analog[n * PAL_HRES];
-
-        for (t = CB_BEG; t < CB_BEG + (CB_CYCLES * PAL_CB_FREQ); t++) {
-            cb = ccburst[nm6][t & 3];
-            line[t] = (BLANK_LEVEL + (cb * BURST_LEVEL)) >> 5;
-            iccf[nm6][t & 3] = line[t];
-        }
-        sy *= s->w;
-
-        phase = nm6 * 2;
-        alter = s->altline[nm6] == -1;
-        phase += alter ? 0 : 6;
-        for (x = 0; x < destw; x++) {
-            int ire, p;
-            
-            p = s->data[((x * s->w) / destw) + sy];
-            ire = BLACK_LEVEL + v->black_point;
-
-            ire += square_sample(p, phase + 0);
-            ire += square_sample(p, phase + 1);
-            ire += square_sample(p, phase + 2);
-            ire += square_sample(p, phase + 3);
-            ire = (ire * v->white_point / 110) >> 12;
-            v->analog[(x + xo) + n * PAL_HRES] = ire;
-            phase += 3;
-        }
-    }
-   
-    for (x = 0; x < 4; x++) {
-        for (n = 0; n < 6; n++) {
-            v->ccf[n][x] = iccf[n][x] << 7;
-        }
-    }
-    v->cc_period = 6;
-}
+#endif
 
 #endif
