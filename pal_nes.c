@@ -52,7 +52,7 @@ square_sample(int p, int phase)
     }
     ohue = hue;
     if (alter) {
-        hue = 0x0d - hue;
+        hue = 0x0d - ((p + 2) & 0x0f);
     }
     v = (((hue + phase) % 12) < 6);
 
