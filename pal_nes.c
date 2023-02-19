@@ -188,7 +188,7 @@ pal_modulate(struct PAL_CRT *v, struct PAL_SETTINGS *s)
    
     for (x = 0; x < 4; x++) {
         for (n = 0; n < 6; n++) {
-            v->ccf[n][x] = iccf[n][x] << 7;
+            v->ccf[n][x] = iccf[(n + 3) % 6][x] << 7;
         }
     }
     v->cc_period = 6;
