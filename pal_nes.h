@@ -118,6 +118,8 @@ struct PAL_SETTINGS {
     int w, h;       /* width and height of image */
     /* NOTE: NES mode is always progressive */
     int hue;              /* 0-359 */
+    int xoffset;    /* x offset in sample space. 0 is minimum value */
+    int yoffset;    /* y offset in # of lines. 0 is minimum value */
     /* make sure your PAL_SETTINGS struct is zeroed out before you do anything */
     int field_initialized; /* internal state */
     
