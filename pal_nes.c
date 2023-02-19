@@ -72,10 +72,14 @@ square_sample(int p, int phase)
  * does not get cleared, all of this should remain the same every update
  */
 static void
-setup_field(struct PAL_CRT *v)
+setup_field(struct PAL_CRT *v, struct PAL_SETTINGS *s)
 {
-    int n;
- 
+    int n, y;
+    
+    for (y = 0; y < 6; y++) {
+        s->altline[y] = ((y & 1) ? -1 : 1);
+    }
+
     for (n = 0; n < PAL_VRES; n++) {
         int t; /* time */
         signed char *line = &v->analog[n * PAL_HRES];
@@ -100,6 +104,15 @@ setup_field(struct PAL_CRT *v)
             while (t < SYNC_BEG) line[t++] = BLANK_LEVEL; /* FP */
             while (t < BW_BEG) line[t++] = SYNC_LEVEL; /* SYNC */
             while (t < PAL_HRES) line[t++] = BLANK_LEVEL;
+            if (s->altline[n & 3] == -1) {
+                for (t = BW_BEG; t < CB_BEG; t++) {
+                    line[t] = SYNC_LEVEL;
+                }
+            } else {
+                for (t = BW_BEG; t < CB_BEG; t++) {
+                    line[t] = BLANK_LEVEL;
+                }
+            }
         }
     }
 }
@@ -113,20 +126,18 @@ pal_modulate(struct PAL_CRT *v, struct PAL_SETTINGS *s)
     int n, phase;
     int iccf[6][4];
     int ccburst[6][4]; /* color phase for burst */
-    int bsign[6];
     int sn, cs;
         
     if (!s->field_initialized) {
-        setup_field(v);
+        setup_field(v, s);
         s->field_initialized = 1;
     }
     for (y = 0; y < 6; y++) {
         int vert = y * (360 / 6);
-        bsign[y] = ((y & 1) ? -1 : 1);
         for (x = 0; x < 4; x++) {
             n = vert + s->hue + x * 90 + 135;
             /* swinging burst */
-            pal_sincos14(&sn, &cs, (n + bsign[y] * 60) * 8192 / 180);
+            pal_sincos14(&sn, &cs, (n + s->altline[y] * 60) * 8192 / 180);
             ccburst[y][x] = sn >> 10;
         }
     }
@@ -139,33 +150,25 @@ pal_modulate(struct PAL_CRT *v, struct PAL_SETTINGS *s)
     /* no border on PAL according to https://www.nesdev.org/wiki/PAL_video */
     for (y = 0; y < desth; y++) {
         signed char *line;  
-        int t, cb;
+        int t, cb, nm6;
         int sy = (y * s->h) / desth;
 
         if (sy >= s->h) sy = s->h;
         if (sy < 0) sy = 0;
  
         n = (y + yo);
+        nm6 = n % 6;
         line = &v->analog[n * PAL_HRES];
-        if (bsign[n & 3] == -1) {
-            for (t = BW_BEG; t < CB_BEG; t++) {
-                line[t] = SYNC_LEVEL;
-            }
-        } else {
-            for (t = BW_BEG; t < CB_BEG; t++) {
-                line[t] = BLANK_LEVEL;
-            }
-        }
 
         for (t = CB_BEG; t < CB_BEG + (CB_CYCLES * PAL_CB_FREQ); t++) {
-            cb = ccburst[n % 6][t & 3];
+            cb = ccburst[nm6][t & 3];
             line[t] = (BLANK_LEVEL + (cb * BURST_LEVEL)) >> 5;
-            iccf[n % 6][t & 3] = line[t];
+            iccf[nm6][t & 3] = line[t];
         }
         sy *= s->w;
 
-        phase = (n % 6) * 2;
-        alter = bsign[n % 6] == -1;
+        phase = nm6 * 2;
+        alter = s->altline[nm6] == -1;
         phase += alter ? 0 : 6;
         for (x = 0; x < destw; x++) {
             int ire, p;
@@ -177,8 +180,8 @@ pal_modulate(struct PAL_CRT *v, struct PAL_SETTINGS *s)
             ire += square_sample(p, phase + 1);
             ire += square_sample(p, phase + 2);
             ire += square_sample(p, phase + 3);
-            ire = ((ire * v->white_point / 110) >> 12);
-            v->analog[(x + xo) + (y + yo) * PAL_HRES] = ire;
+            ire = (ire * v->white_point / 110) >> 12;
+            v->analog[(x + xo) + n * PAL_HRES] = ire;
             phase += 3;
         }
     }
