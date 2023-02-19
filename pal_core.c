@@ -85,9 +85,9 @@ pal_bpp4fmt(int format)
 
 /* convolution is much faster but the EQ looks softer, more authentic, and more analog */
 #define USE_CONVOLUTION 0
-#define USE_7_SAMPLE_KERNEL 1
+#define USE_7_SAMPLE_KERNEL 0
 #define USE_6_SAMPLE_KERNEL 0
-#define USE_5_SAMPLE_KERNEL 0
+#define USE_5_SAMPLE_KERNEL 1
 
 #if USE_CONVOLUTION
 
@@ -283,7 +283,7 @@ pal_demodulate(struct PAL_CRT *c, int noise)
 {
     struct {
         int y, u, v;
-    } out[AV_LEN + 1], *yuvA, *yuvB;
+    } outbuf[AV_LEN + 16], *out = outbuf + 8, *yuvA, *yuvB;
     int i, j, line, rn;
     signed char *sig;
     int s = 0;
@@ -303,7 +303,7 @@ pal_demodulate(struct PAL_CRT *c, int noise)
         return;
     }
     pitch = c->outw * bpp;
-
+    
     rn = c->rn;
     for (i = 0; i < PAL_INPUT_SIZE; i++) {
         rn = (214019 * rn + 140327895);
@@ -484,8 +484,8 @@ vsync_found:
                 delay_line[i].v = ov;
             }
             out[i].y = eqf(&eqY, sig[i] + bright) << 4;
-            out[i].u = eqf(&eqU, dmU >> 9) >> 3;
-            out[i].v = eqf(&eqV, dmV >> 9) >> 3;
+            out[i + c->chroma_lag].u = eqf(&eqU, dmU >> 9) >> 3;
+            out[i + c->chroma_lag].v = eqf(&eqV, dmV >> 9) >> 3;
         }
 
         cL = c->out + (beg * pitch);
