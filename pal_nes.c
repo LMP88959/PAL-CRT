@@ -24,17 +24,20 @@ static int alter = 0; /* flag for alternate line */
 static int
 square_sample(int p, int phase)
 {
-    /* amplified IRE = ((mV / 7.143) - 312 / 7.143) * 1024 */
-    /* https://www.nesdev.org/wiki/NTSC_video#Brightness_Levels */
+    /* amplified IRE = ((mV / 7.143) - 288 / 7.143) * 1024 */
+    /* From HardWareMan's RP2C07 voltage measurements
+     * NOTE: emphasized voltages are estimated as they
+     * were not part of the measurements
+     */
     static int IRE[16] = {
      /* 0d     1d     2d      3d */
-       -12042, 0,     34406,  81427,
+       -14336, 0,     34406,  77413,
      /* 0d     1d     2d      3d emphasized */
-       -17203,-8028,  19497,  57342,
+       -20070,-8028,  19611,  54189,
      /* 00     10     20      30 */
-        43581, 75693, 112965, 112965,
+        45874, 75693, 110098, 110098,
      /* 00     10     20      30 emphasized */
-        26951, 52181, 83721,  83721
+        26951, 52181, 81472,  81472
     };
     static int active[6] = {
         0300, 0200,
