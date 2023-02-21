@@ -167,7 +167,7 @@ pal_modulate(struct PAL_CRT *v, struct PAL_SETTINGS *s)
 
         for (t = CB_BEG; t < CB_BEG + (CB_CYCLES * PAL_CB_FREQ); t++) {
             cb = ccburst[nm6][t & 3];
-            line[t] = (BLANK_LEVEL + (cb * BURST_LEVEL)) >> 5;
+            line[t] = (BLANK_LEVEL + (cb * BURST_LEVEL)) >> 15;
             iccf[nm6][t & 3] = line[t];
         }
         sy *= s->w;
