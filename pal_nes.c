@@ -138,10 +138,12 @@ pal_modulate(struct PAL_CRT *v, struct PAL_SETTINGS *s)
     for (y = 0; y < 6; y++) {
         int vert = y * (360 / 6);
         for (x = 0; x < 4; x++) {
-            n = vert + s->hue + x * 90 + 90;
+            int ang;
+            n = vert + x * 90 + 90;
+            ang = n + (s->altline[y] * 60) + (s->altline[y] * s->hue);
             /* swinging burst */
-            pal_sincos14(&sn, &cs, (n + s->altline[y] * 60) * 8192 / 180);
-            ccburst[y][x] = sn >> 10;
+            pal_sincos14(&sn, &cs, ang * 8192 / 180);
+            ccburst[y][x] = sn;
         }
     }
 
