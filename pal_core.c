@@ -507,17 +507,7 @@ vsync_found:
             y = ((yuvA->y * L) >>  2) + ((yuvB->y * R) >>  2);
             u = ((yuvA->u * L) >> 14) + ((yuvB->u * R) >> 14);
             v = ((yuvA->v * L) >> 14) + ((yuvB->v * R) >> 14);
-#if (PAL_SYSTEM == PAL_SYSTEM_NES)
-            {
-                /* rotating about -17.2 degrees seems to give good hues */
-                /* pal_sincos14(&huesn, &huecs, 15600); */
-                int ru, rv;
-                ru = ((u * 31284 - v * -9701) >> 15);
-                rv = ((v * 31284 + u * -9701) >> 15);
-                u = ru;
-                v = rv;
-            }
-#endif
+
             /* YUV to RGB */
             r = (((y + 4669 * v) >> 12) * c->contrast) >> 8;
             g = (((y - 1622 * u - 2380 * v) >> 12) * c->contrast) >> 8;
