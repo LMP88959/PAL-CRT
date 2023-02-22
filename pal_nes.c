@@ -81,8 +81,8 @@ setup_field(struct PAL_CRT *v, struct PAL_SETTINGS *s)
     
     for (y = 0; y < 6; y++) {
         s->altline[y] = ((y & 1) ? -1 : 1);
-    }
-
+    };
+ 
     for (n = 0; n < PAL_VRES; n++) {
         int t; /* time */
         signed char *line = &v->analog[n * PAL_HRES];
@@ -139,8 +139,8 @@ pal_modulate(struct PAL_CRT *v, struct PAL_SETTINGS *s)
         int vert = y * (360 / 6);
         for (x = 0; x < 4; x++) {
             int ang;
-            n = vert + x * 90 + 90;
-            ang = n + (s->altline[y] * 60) + (s->altline[y] * s->hue);
+            n = vert + x * 90 + 120;
+            ang = n + (s->altline[y] * 45) + (s->altline[y] * s->hue);
             /* swinging burst */
             pal_sincos14(&sn, &cs, ang * 8192 / 180);
             ccburst[y][x] = sn;
@@ -149,7 +149,7 @@ pal_modulate(struct PAL_CRT *v, struct PAL_SETTINGS *s)
 
     xo = AV_BEG  + s->xoffset;
     yo = PAL_TOP + s->yoffset;
-    
+       
     /* align signal */
     xo = (xo & ~3);
     /* no border on PAL according to https://www.nesdev.org/wiki/PAL_video */
@@ -180,7 +180,7 @@ pal_modulate(struct PAL_CRT *v, struct PAL_SETTINGS *s)
             
             p = s->data[((x * s->w) / destw) + sy];
             ire = BLACK_LEVEL + v->black_point;
-
+            
             ire += square_sample(p, phase + 0);
             ire += square_sample(p, phase + 1);
             ire += square_sample(p, phase + 2);
