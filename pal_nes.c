@@ -16,9 +16,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*  in PAL, the red and green emphasis bits swap meaning
+ *  when compared to the NTSC version.
+ *  If your emulator does this swapping already, set this to 0.
+ *  Otherwise, set to 1.
+ */
+#define SWAP_RED_GREEN_EMPHASIS_BITS 0
+
 /* generate the square wave for a given 9-bit pixel and phase
- * NOTE: in this PAL version, the red and green emphasis bits swap meaning
- * when compared to the NTSC version
  */
 static int alter = 0; /* flag for alternate line */
 static int
@@ -48,11 +53,19 @@ square_sample(int p, int phase)
      /* 00     10     20      30 emphasized */
         25645, 49294, 76783,  76783
     };
+#if SWAP_RED_GREEN_EMPHASIS_BITS
     static int active[6] = {
         0300, 0200,
         0600, 0400,
         0500, 0100
     };
+#else
+    static int active[6] = {
+        0300, 0100,
+        0500, 0400,
+        0600, 0200
+    };
+#endif
     int hue, ohue;
     int e, l, v;
 
