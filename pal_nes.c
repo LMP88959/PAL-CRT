@@ -85,12 +85,14 @@ square_sample(int p, int phase)
     };
 #endif
 #if SWAP_RED_GREEN_EMPHASIS_BITS
+    /* red 0200, green 0100, blue 0400 */
     static int active[6] = {
         0300, 0200,
         0600, 0400,
         0500, 0100
     };
 #else
+    /* red 0100, green 0200, blue 0400 */
     static int active[6] = {
         0300, 0100,
         0500, 0400,
@@ -112,7 +114,6 @@ square_sample(int p, int phase)
     }
     v = (((hue + phase) % 12) < 6);
 
-    /* red 0200, green 0100, blue 0400 */
     e = (((p & 0700) & active[(phase >> 1) % 6]) > 0);
     switch (ohue) {
         case 0x00: l = 1; break;
