@@ -23,12 +23,42 @@
  */
 #define SWAP_RED_GREEN_EMPHASIS_BITS 0
 
+/* Use UA6538 voltages or RP2C07 */
+#define UA6538 0
+
 /* generate the square wave for a given 9-bit pixel and phase
  */
 static int alter = 0; /* flag for alternate line */
 static int
 square_sample(int p, int phase)
 {
+#if UA6538
+    /*  white = 1450
+     *  black = 0
+     *  IREmax = 110
+     *    
+     *  ampIRE = round((mV / (white - black)) * 1024 * IREmax) 
+     */
+    /* From HardWareMan's UA6538 voltage measurements
+     * RELATIVE TO BLACK (mV)
+     *        LOW/EMPH          HIGH/EMPH
+     *  L0   -125 / -208         450 /  234
+     *  L1      0 / -116         934 /  600
+     *  L2    350 /  159        1450 / 1009
+     *  L3    975 /  634        1450 / 1009
+     *  
+     */
+    static int IRE[16] = {
+     /* 0d     1d     2d      3d */
+       -9710,  0,     27189,  75741,
+     /* 0d     1d     2d      3d emphasized */
+       -16158,-9011,  12352,  49251,
+     /* 00     10     20      30 */
+        34957, 72556, 112640, 112640,
+     /* 00     10     20      30 emphasized */
+        18178, 46610, 78382,  78382
+    };
+#else
     /*  white = 1467
      *  black = 0
      *  IREmax = 110
@@ -53,6 +83,7 @@ square_sample(int p, int phase)
      /* 00     10     20      30 emphasized */
         25645, 49294, 76783,  76783
     };
+#endif
 #if SWAP_RED_GREEN_EMPHASIS_BITS
     static int active[6] = {
         0300, 0200,
