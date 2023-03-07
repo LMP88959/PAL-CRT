@@ -28,9 +28,8 @@
 
 /* generate the square wave for a given 9-bit pixel and phase
  */
-static int alter = 0; /* flag for alternate line */
 static int
-square_sample(int p, int phase)
+square_sample(int p, int phase, int alter)
 {
 #if UA6538
     /*  white = 1450
@@ -184,6 +183,7 @@ pal_modulate(struct PAL_CRT *v, struct PAL_SETTINGS *s)
     int iccf[6][4];
     int ccburst[6][4]; /* color phase for burst */
     int sn, cs;
+    int alter = 0;
         
     if (!s->field_initialized) {
         setup_field(v, s);
@@ -235,10 +235,10 @@ pal_modulate(struct PAL_CRT *v, struct PAL_SETTINGS *s)
             p = s->data[((x * s->w) / destw) + sy];
             ire = BLACK_LEVEL + v->black_point;
             
-            ire += square_sample(p, phase + 0);
-            ire += square_sample(p, phase + 1);
-            ire += square_sample(p, phase + 2);
-            ire += square_sample(p, phase + 3);
+            ire += square_sample(p, phase + 0, alter);
+            ire += square_sample(p, phase + 1, alter);
+            ire += square_sample(p, phase + 2, alter);
+            ire += square_sample(p, phase + 3, alter);
             ire = (ire * v->white_point / 110) >> 12;
             v->analog[(x + xo) + n * PAL_HRES] = ire;
             phase += 3;
