@@ -85,9 +85,9 @@ pal_bpp4fmt(int format)
 
 /* convolution is much faster but the EQ looks softer, more authentic, and more analog */
 #define USE_CONVOLUTION 0
-#define USE_7_SAMPLE_KERNEL 0
-#define USE_6_SAMPLE_KERNEL 0
-#define USE_5_SAMPLE_KERNEL 1
+#define USE_7_SAMPLE 0
+#define USE_6_SAMPLE 0
+#define USE_5_SAMPLE 1
 
 #if USE_CONVOLUTION
 
