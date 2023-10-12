@@ -25,17 +25,20 @@ extern "C" {
 
 /* library version */
 #define PAL_MAJOR 1
-#define PAL_MINOR 1
-#define PAL_PATCH 2
+#define PAL_MINOR 2
+#define PAL_PATCH 0
 
-#define PAL_SYSTEM_PAL 0 /* 'standard' PAL */
-#define PAL_SYSTEM_NES 1 /* decode 6 or 9-bit NES pixels */
+#define PAL_SYSTEM_PAL    0 /* 'standard' PAL */
+#define PAL_SYSTEM_NES    1 /* decode 6 or 9-bit NES pixels */
+#define PAL_SYSTEM_NESRGB 2 /* encode RGB image with NES artifacts */
 
 /* the system to be compiled */
-#define PAL_SYSTEM PAL_SYSTEM_PAL
+#define PAL_SYSTEM PAL_SYSTEM_NESRGB
 
 #if (PAL_SYSTEM == PAL_SYSTEM_NES)
 #include "pal_nes.h"
+#elif (PAL_SYSTEM == PAL_SYSTEM_NESRGB)
+#include "pal_nesrgb.h"
 #elif (PAL_SYSTEM == PAL_SYSTEM_PAL)
 #include "pal.h"
 #else
