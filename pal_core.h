@@ -33,7 +33,7 @@ extern "C" {
 #define PAL_SYSTEM_NESRGB 2 /* encode RGB image with NES artifacts */
 
 /* the system to be compiled */
-#define PAL_SYSTEM PAL_SYSTEM_NESRGB
+#define PAL_SYSTEM PAL_SYSTEM_PAL
 
 #if (PAL_SYSTEM == PAL_SYSTEM_NES)
 #include "pal_nes.h"
