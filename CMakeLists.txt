@@ -60,7 +60,7 @@ add_dependencies(fw::fw fw)
 endif()
 
 # --- PAL program
-add_executable(pal pal_core.c pal.c pal_nes.c pal_main.c ppm_rw.c bmp_rw.c)
+add_executable(pal pal_core.c pal.c pal_nes.c pal_nesrgb.c pal_main.c ppm_rw.c bmp_rw.c)
 target_include_directories(pal PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(pal PRIVATE
 CMD_LINE_VERSION=$<NOT:$<BOOL:${live}>>
