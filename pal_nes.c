@@ -29,7 +29,7 @@
 /* generate the square wave for a given 9-bit pixel and phase
  */
 static int
-square_sample(int p, int phase, int alter, bool ua6538)
+square_sample(int p, int phase, int alter, int ua6538)
 {
     /*  white = 1450
      *  black = 0
@@ -117,10 +117,11 @@ square_sample(int p, int phase, int alter, bool ua6538)
         default:   l = v; break;
     }
 
-    if (ua6538)
+    if (ua6538) {
         return IRE_UA6538[(l << 3) + (e << 2) + ((p >> 4) & 3)];
-    else
+    } else {
         return IRE[(l << 3) + (e << 2) + ((p >> 4) & 3)];
+    }
 }
 
 /* this function is an optimization
