@@ -29,9 +29,8 @@
 /* generate the square wave for a given 9-bit pixel and phase
  */
 static int
-square_sample(int p, int phase, int alter)
+square_sample(int p, int phase, int alter, int ua6538)
 {
-#if UA6538
     /*  white = 1450
      *  black = 0
      *  IREmax = 110
@@ -47,7 +46,7 @@ square_sample(int p, int phase, int alter)
      *  L3    975 /  634        1450 / 1009
      *  
      */
-    static int IRE[16] = {
+    static int IRE_UA6538[16] = {
      /* 0d     1d     2d      3d */
        -9710,  0,     27189,  75741,
      /* 0d     1d     2d      3d emphasized */
@@ -57,7 +56,6 @@ square_sample(int p, int phase, int alter)
      /* 00     10     20      30 emphasized */
         18178, 46610, 78382,  78382
     };
-#else
     /*  white = 1467
      *  black = 0
      *  IREmax = 110
@@ -82,7 +80,6 @@ square_sample(int p, int phase, int alter)
      /* 00     10     20      30 emphasized */
         25645, 49294, 76783,  76783
     };
-#endif
 #if SWAP_RED_GREEN_EMPHASIS_BITS
     /* red 0200, green 0100, blue 0400 */
     static int active[6] = {
@@ -120,7 +117,11 @@ square_sample(int p, int phase, int alter)
         default:   l = v; break;
     }
 
-    return IRE[(l << 3) + (e << 2) + ((p >> 4) & 3)];
+    if (ua6538) {
+        return IRE_UA6538[(l << 3) + (e << 2) + ((p >> 4) & 3)];
+    } else {
+        return IRE[(l << 3) + (e << 2) + ((p >> 4) & 3)];
+    }
 }
 
 /* this function is an optimization
@@ -235,10 +236,10 @@ pal_modulate(struct PAL_CRT *v, struct PAL_SETTINGS *s)
             p = s->data[((x * s->w) / destw) + sy];
             ire = BLACK_LEVEL + v->black_point;
             
-            ire += square_sample(p, phase + 0, alter);
-            ire += square_sample(p, phase + 1, alter);
-            ire += square_sample(p, phase + 2, alter);
-            ire += square_sample(p, phase + 3, alter);
+            ire += square_sample(p, phase + 0, alter, s->ua6538);
+            ire += square_sample(p, phase + 1, alter, s->ua6538);
+            ire += square_sample(p, phase + 2, alter, s->ua6538);
+            ire += square_sample(p, phase + 3, alter, s->ua6538);
             ire = (ire * v->white_point / 110) >> 12;
             v->analog[(x + xo) + n * PAL_HRES] = ire;
             phase += 3;

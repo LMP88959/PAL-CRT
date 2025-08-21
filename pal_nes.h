@@ -120,6 +120,7 @@ struct PAL_SETTINGS {
     int hue;              /* 0-359 */
     int xoffset;    /* x offset in sample space. 0 is minimum value */
     int yoffset;    /* y offset in # of lines. 0 is minimum value */
+    int ua6538;     /* set to non-zero for UA6538 mode, zero for RP2C07 */
     /* make sure your PAL_SETTINGS struct is zeroed out before you do anything */
     int field_initialized; /* internal state */
     
