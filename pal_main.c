@@ -230,6 +230,7 @@ main(int argc, char **argv)
 
     pal_init(&crt, outw, outh, PAL_PIX_FORMAT_BGRA, output);
 
+    memset(&pal, 0, sizeof(struct PAL_SETTINGS));
     pal.data = img;
     pal.format = PAL_PIX_FORMAT_BGRA;
     pal.w = imgw;
